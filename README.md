@@ -1,8 +1,16 @@
-# DSO202 — Assignment 1: Three-Tier App on Kubernetes
+# DSO202 - Assignment 1: Three-Tier App on Kubernetes
 
-Deploys a pre-built Task Tracker (frontend, backend, database) into the
-`dso202-assignment-01` namespace on a local kind cluster. All manifests
-are in this repo, split by tier.
+## Introduction
+
+This repository contains the Kubernetes manifests used to deploy a
+pre-built three-tier Task Tracker application, frontend, backend, and
+database, into a dedicated `dso202-assignment-01` namespace on a local
+`kind` cluster. All three container images
+(`sarojsanyasi/dso202-frontend:1.0`, `sarojsanyasi/dso202-backend:1.0`,
+`sarojsanyasi/dso202-db:1.0`) were provided by the module tutor; no
+application source code was written for this assignment. The graded work
+here is entirely the Kubernetes configuration: how the three tiers are
+connected, configured, secured, governed, and verified.
 
 ## Task 1 - Architecture Note
 
@@ -28,7 +36,7 @@ tutor-provided images, kube-proxy routes traffic for each Service.
 `configmap.yaml` holds non-sensitive values. `secret.yaml` holds
 credentials (`DB_USER`, `DB_PASSWORD`, `POSTGRES_USER`,
 `POSTGRES_PASSWORD`). The backend uses `DB_*` names, the official
-Postgres image uses `POSTGRES_*` names — both are set to matching values.
+Postgres image uses `POSTGRES_*` names, both are set to matching values.
 
 **Note:** Kubernetes Secrets are only base64-encoded, not encrypted at
 rest by default. Anyone with API access can decode them
@@ -55,8 +63,9 @@ all three Deployments and confirming quota usage rose from `0` to
 ## Task 7 - Evidence
 
 ### a. Full CRUD Cycle
-Performed via `curl` through a port-forwarded backend
-(`kubectl port-forward svc/backend-svc 8080:8080`).
+
+**Via curl**, through a port-forwarded backend
+(`kubectl port-forward svc/backend-svc 8080:8080`):
 
 **Create:**
 ![Create](evidence/task7a-01-create.png)
@@ -69,6 +78,20 @@ Performed via `curl` through a port-forwarded backend
 
 **Delete (and confirmation it's gone):**
 ![Delete](evidence/task7a-04-delete.png)
+
+**Via the frontend UI** - for this demo only, `BACKEND_URL` was
+temporarily pointed at `http://localhost:8080` (via a backend
+port-forward) since a browser can't resolve the cluster-internal
+`backend-svc` name; it was reverted back afterward.
+
+**Create:**
+![UI create](evidence/task7a-05-ui-create.png)
+
+**Update:**
+![UI update](evidence/task7a-06-ui-update.png)
+
+**Delete:**
+![UI delete](evidence/task7a-07-ui-delete.png)
 
 ### b. Service DNS Resolution
 From inside the frontend pod (`kubectl exec`), curled the backend
@@ -105,10 +128,58 @@ A demo ConfigMap was created both ways.
 | | Declarative (`kubectl apply -f`) | Imperative (`kubectl create ...`) |
 |---|---|---|
 | **How it's done** | Desired state written to a YAML file, then applied | Object created directly via a single command |
-| **Repeatability** | Idempotent — reapplying the same file is always safe | Not idempotent — running it again fails or errors if the object exists |
-| **Version control** | File can be committed, reviewed, and diffed in Git | No file produced — nothing to commit or review |
+| **Repeatability** | Idempotent - reapplying the same file is always safe | Not idempotent - running it again fails or errors if the object exists |
+| **Version control** | File can be committed, reviewed, and diffed in Git | No file produced - nothing to commit or review |
 | **Speed** | Slightly slower (write file, then apply) | Faster for quick, one-off objects |
 | **Best for** | Real, reusable resources (used for everything else in this assignment) | Throwaway objects or quick debugging |
+
+## Problems Faced
+
+- **kind cluster lost on recreation:** the original 3-node cluster
+  (`dso202-p2`, with a control-plane and two workers) had stopped
+  responding after a restart. Recreating it without the original
+  `kind-config.yaml` produced a single control-plane node only, and any
+  `extraPortMappings` for browser-facing NodePort access were lost.
+  `kubectl port-forward` was used as the fallback throughout, as the
+  brief explicitly allows.
+- **Slow image pulls inside the kind node:** the database image stalled
+  at `ContainerCreating` for several minutes despite already being
+  cached on the host. Resolved with `kind load docker-image`, which
+  copies an image already pulled by Docker directly into the node's
+  containerd, bypassing the slow pull.
+- **Backend/frontend images lack `curl`:** both run on minimal images
+  with no shell utilities beyond what's strictly needed. Verified
+  connectivity instead using `node -e "fetch(...)"` (backend has Node)
+  and `wget` (available in the nginx-alpine frontend image).
+- **Browser couldn't resolve `backend-svc`:** the frontend's
+  `BACKEND_URL` is a cluster-internal DNS name, meaningless to a browser
+  running on the host. Worked around for UI screenshots only by
+  temporarily port-forwarding the backend and pointing `BACKEND_URL` at
+  `localhost`, then reverting it afterward — the real deployed value
+  stays as `http://backend-svc:8080`, which is correct and required for
+  the manifests to work when applied fresh.
+- **Stuck/duplicate `kubectl port-forward` processes:** several commands
+  failed with "address already in use" from earlier port-forwards left
+  running in other terminals. Resolved by finding the process with
+  `lsof -i :<port>` and killing the stale one, or forwarding to a
+  different local port instead.
+
+## Conclusion
+
+All three tiers - database, backend, and frontend - were deployed
+successfully into the `dso202-assignment-01` namespace, wired together
+using ConfigMaps, Secrets, and Kubernetes Service DNS rather than any
+hardcoded values. Persistent storage on the database tier was confirmed
+to survive pod deletion, self-healing was confirmed via the
+Deployment/ReplicaSet controllers, and namespace-level resource
+governance was applied and verified with real usage numbers. The full
+CRUD cycle was demonstrated both directly against the API and through
+the actual frontend UI, and Kubernetes' internal DNS was confirmed
+working from inside a running pod. This exercise reinforced how the
+different Unit I building blocks, namespaces, ConfigMaps/Secrets,
+Deployments, Services of different types, PersistentVolumeClaims, and
+resource quotas - work together to run a realistic, multi-tier
+application on a real (if local) cluster.
 
 ## Deploy
 
