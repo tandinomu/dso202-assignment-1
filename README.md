@@ -2,15 +2,7 @@
 
 ## Introduction
 
-This repository contains the Kubernetes manifests used to deploy a
-pre-built three-tier Task Tracker application, frontend, backend, and
-database, into a dedicated `dso202-assignment-01` namespace on a local
-`kind` cluster. All three container images
-(`sarojsanyasi/dso202-frontend:1.0`, `sarojsanyasi/dso202-backend:1.0`,
-`sarojsanyasi/dso202-db:1.0`) were provided by the module tutor; no
-application source code was written for this assignment. The graded work
-here is entirely the Kubernetes configuration: how the three tiers are
-connected, configured, secured, governed, and verified.
+This repository contains Kubernetes manifests for deploying a pre-built three-tier Task Tracker application with a frontend, backend, and database on a local kind cluster. The application images were provided, so no application code was written. The main focus is on configuring, connecting, securing, and managing the three tiers using Kubernetes.
 
 ## Task 1 - Architecture Note
 
@@ -135,51 +127,15 @@ A demo ConfigMap was created both ways.
 
 ## Problems Faced
 
-- **kind cluster lost on recreation:** the original 3-node cluster
-  (`dso202-p2`, with a control-plane and two workers) had stopped
-  responding after a restart. Recreating it without the original
-  `kind-config.yaml` produced a single control-plane node only, and any
-  `extraPortMappings` for browser-facing NodePort access were lost.
-  `kubectl port-forward` was used as the fallback throughout, as the
-  brief explicitly allows.
-- **Slow image pulls inside the kind node:** the database image stalled
-  at `ContainerCreating` for several minutes despite already being
-  cached on the host. Resolved with `kind load docker-image`, which
-  copies an image already pulled by Docker directly into the node's
-  containerd, bypassing the slow pull.
-- **Backend/frontend images lack `curl`:** both run on minimal images
-  with no shell utilities beyond what's strictly needed. Verified
-  connectivity instead using `node -e "fetch(...)"` (backend has Node)
-  and `wget` (available in the nginx-alpine frontend image).
-- **Browser couldn't resolve `backend-svc`:** the frontend's
-  `BACKEND_URL` is a cluster-internal DNS name, meaningless to a browser
-  running on the host. Worked around for UI screenshots only by
-  temporarily port-forwarding the backend and pointing `BACKEND_URL` at
-  `localhost`, then reverting it afterward — the real deployed value
-  stays as `http://backend-svc:8080`, which is correct and required for
-  the manifests to work when applied fresh.
-- **Stuck/duplicate `kubectl port-forward` processes:** several commands
-  failed with "address already in use" from earlier port-forwards left
-  running in other terminals. Resolved by finding the process with
-  `lsof -i :<port>` and killing the stale one, or forwarding to a
-  different local port instead.
+- The original 3-node kind cluster was lost after a restart, so a new cluster was created and kubectl port-forward was used when needed.
+- The database image took a long time to pull, so kind load docker-image was used to load it directly into the cluster.
+- The backend and frontend images did not have curl, so node fetch() and wget were used to test connectivity.
+- The browser could not access the internal backend-svc address, so port forwarding was used for UI testing.
+Some port-forward commands failed because old processes were still running. They were stopped using lsof and kill.
 
 ## Conclusion
 
-All three tiers - database, backend, and frontend - were deployed
-successfully into the `dso202-assignment-01` namespace, wired together
-using ConfigMaps, Secrets, and Kubernetes Service DNS rather than any
-hardcoded values. Persistent storage on the database tier was confirmed
-to survive pod deletion, self-healing was confirmed via the
-Deployment/ReplicaSet controllers, and namespace-level resource
-governance was applied and verified with real usage numbers. The full
-CRUD cycle was demonstrated both directly against the API and through
-the actual frontend UI, and Kubernetes' internal DNS was confirmed
-working from inside a running pod. This exercise reinforced how the
-different Unit I building blocks, namespaces, ConfigMaps/Secrets,
-Deployments, Services of different types, PersistentVolumeClaims, and
-resource quotas - work together to run a realistic, multi-tier
-application on a real (if local) cluster.
+All three tiers were successfully deployed in Kubernetes and connected using Services, ConfigMaps, and Secrets. Persistent storage, self-healing, resource limits, CRUD operations, and internal DNS were successfully tested. This practical helped demonstrate how Kubernetes components work together to run a multi-tier application.
 
 ## Deploy
 
