@@ -1,0 +1,9 @@
+apiVersion: databases.example.com/v1
+kind: PostgresCluster
+metadata:
+  name: dso202-demo-db
+  namespace: dso202-assignment-01
+spec:
+  postgresVersion: "16.4"
+  replicas: 3
+  storageSize: 5Gi
