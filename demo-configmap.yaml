@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: demo-config
-  namespace: dso202-assignment-01
-data:
-  example: "declarative"
