@@ -50,7 +50,7 @@ The CPU and memory requests and limits provide resources for each tier while kee
 
 The configuration was tested by restarting all three Deployments. Quota usage increased from `0` to `300m` CPU and `384Mi` memory, matching the default requests for three containers.
 
-![Quota and LimitRange](evidence/quota-and-limitrange.png)
+![Quota and LimitRange](evidence/task6-quota-limitrange.png)
 
 ## Task 7: Evidence
 
@@ -64,23 +64,23 @@ kubectl port-forward svc/backend-svc 8080:8080
 
 **Create**
 
-![Create](evidence/crud-01-create.png)
+![Create](evidence/task7a-01-create.png)
 
 **List**
 
 The list operation confirmed that the task was saved.
 
-![List](evidence/crud-02-list.png)
+![List](evidence/task7a-02-list.png)
 
 **Update**
 
-![Update](evidence/crud-03-update.png)
+![Update](evidence/task7a-03-update.png)
 
 **Delete**
 
 The task was deleted and its removal was confirmed.
 
-![Delete](evidence/crud-04-delete.png)
+![Delete](evidence/task7a-04-delete.png)
 
 ### Testing Through the Frontend
 
@@ -90,15 +90,15 @@ This was necessary because the browser cannot resolve the cluster-internal addre
 
 **Create**
 
-![UI create](evidence/ui-01-create.png)
+![UI create](evidence/task7a-05-ui-create.png)
 
 **Update**
 
-![UI update](evidence/ui-02-update.png)
+![UI update](evidence/task7a-06-ui-update.png)
 
 **Delete**
 
-![UI delete](evidence/ui-03-delete.png)
+![UI delete](evidence/task7a-07-ui-delete.png)
 
 ### b. Service DNS Resolution
 
@@ -110,7 +110,7 @@ http://backend-svc:8080/api/status
 
 The request returned a healthy response, confirming that Kubernetes DNS could resolve the backend Service by name.
 
-![DNS resolution](evidence/dns-resolution.png)
+![DNS resolution](evidence/task7b-dns-resolution.png)
 
 ### c. Self-Healing and Data Persistence
 
@@ -120,15 +120,15 @@ A task created before deleting the pod was retrieved successfully after the repl
 
 **Task before deletion**
 
-![Before deletion](evidence/selfheal-01-before-deletion.png)
+![Before deletion](evidence/task7c-01-before-deletion.png)
 
 **Pod automatically recreated**
 
-![Pod recreated](evidence/selfheal-02-pod-recreated.png)
+![Pod recreated](evidence/task7c-02-pod-recreated.png)
 
 **Task retrieved after recreation**
 
-![Data persisted](evidence/selfheal-03-data-persisted.png)
+![Data persisted](evidence/task7c-03-data-persisted.png)
 
 ### d. Declarative and Imperative Comparison
 
@@ -140,7 +140,7 @@ A demo ConfigMap was created using both declarative and imperative methods.
 kubectl apply -f demo-configmap.yaml
 ```
 
-![Declarative](evidence/declarative.png)
+![Declarative](evidence/task7d-01-declarative.png)
 
 **Imperative method**
 
@@ -148,7 +148,7 @@ kubectl apply -f demo-configmap.yaml
 kubectl create configmap ... --from-literal=...
 ```
 
-![Imperative](evidence/imperative.png)
+![Imperative](evidence/task7d-02-imperative.png)
 
 **Comparison**
 
