@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-headless
+  namespace: dso202-assignment-01
+  labels:
+    app: postgres-demo
+spec:
+  clusterIP: None
+  selector:
+    app: postgres-demo
+  ports:
+    - port: 5432
+      name: postgres
+      
